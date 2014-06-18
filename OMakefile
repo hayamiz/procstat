@@ -1,0 +1,9 @@
+
+CFILES[] =
+  procstat
+
+CFLAGS = -g -O0 -Wall
+
+MAIN = procstat
+
+.DEFAULT: $(CProgram $(MAIN), $(CFILES))
