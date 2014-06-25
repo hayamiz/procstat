@@ -27,6 +27,16 @@ sigint_handler(int signum, siginfo_t *info, void *handler) {
 }
 
 static void
+print_help(void)
+{
+	printf("Usage: procstat [options]\n");
+	printf("\nOptions:\n");
+	printf("  -p PID	Process ID of target.\n");
+	printf("  -o FILE	Output file path. (default: standard output)\n");
+	printf("  -i SEC	Recording interval. (default: 1.0)\n");
+}
+
+static void
 parse_args(int argc, char **argv) {
 	pid_t pid;
 	double interval;
@@ -38,7 +48,7 @@ parse_args(int argc, char **argv) {
 	option.interval = 1000000L;
 
 	opterr = 0;
-	while ((c = getopt(argc, argv, "p:o:i:")) != -1) {
+	while ((c = getopt(argc, argv, "p:o:i:h")) != -1) {
 		switch (c)
 		{
 		case 'p':
@@ -56,7 +66,11 @@ parse_args(int argc, char **argv) {
 			interval = strtod(optarg, NULL);
 			option.interval = interval * 1000000L; /* in microseconds */
 			break;
+		case 'h':
+			print_help();
+			abort();
 		default:
+			print_help();
 			abort ();
 		}
 	}
@@ -163,6 +177,7 @@ main(int argc, char **argv) {
 
 	if (option.nr_procs == 0) {
 		fprintf(stderr, "ERROR: no pid given.\n");
+		print_help();
 		return EXIT_FAILURE;
 	}
 
