@@ -77,13 +77,28 @@ parse_args(int argc, char **argv) {
 }
 
 static char *linebuf = NULL;
+static char path[1024];
 
 static void
 loop(void) {
 	struct timeval tv_now;
 	long int now;
 	long int next;
-	char path[1024];
+	int idx;
+	char **io_path_list;
+	char **stat_path_list;
+
+	io_path_list = malloc(sizeof(char *) * option.nr_procs);
+	stat_path_list = malloc(sizeof(char *) * option.nr_procs);
+
+	for (idx = 0; idx < option.nr_procs; idx++) {
+		pid_t pid = option.pid_list[idx];
+
+		sprintf(path, "/proc/%d/io", pid);
+		io_path_list[idx] = strdup(path);
+		sprintf(path, "/proc/%d/stat", pid);
+		stat_path_list[idx] = strdup(path);
+	}
 
 	if (option.output != NULL) {
 		out_file = fopen(option.output, "w");
@@ -98,8 +113,8 @@ loop(void) {
 	next = now;
 	while(is_running) {
 		char *lineptr = linebuf;
-		int idx;
 		int n;
+		int nr_live_procs = 0;
 
 		gettimeofday(&tv_now, NULL);
 		now = tv_now.tv_sec * 1000000L + tv_now.tv_usec;
@@ -108,11 +123,25 @@ loop(void) {
 
 		for (idx = 0; idx < option.nr_procs; idx++) {
 			pid_t pid = option.pid_list[idx];
-			FILE *f;
+			FILE *io_file, *stat_file;
 			char c;
 
-			if (idx > 0)
+			if (nr_live_procs > 0)
 				*(lineptr++) = ',';
+
+			/* pid_list[idx] is set to 0 when process termination is detected. */
+			if (pid == 0)
+				continue;
+
+			io_file = fopen(io_path_list[idx], "r");
+			stat_file = fopen(stat_path_list[idx], "r");
+
+			if (io_file == NULL || stat_file == NULL) {
+				if (io_file != NULL) fclose(io_file);
+				if (stat_file != NULL) fclose(stat_file);
+				option.pid_list[idx] = 0;
+				continue;
+			}
 
 			n = sprintf(lineptr, "\"%d\":{", pid);
 			lineptr += n;
@@ -120,42 +149,43 @@ loop(void) {
 			/* io */
 			n = sprintf(lineptr, "\"io\":");
 			lineptr += n;
-			sprintf(path, "/proc/%d/io", pid);
-			f = fopen(path, "r");
 			*(lineptr++) = '"';
-			while ((c = fgetc(f)) != EOF) {
+			while ((c = fgetc(io_file)) != EOF) {
 				if (c == '\n') {
 					*(lineptr++) = '\\'; *(lineptr++) = 'n';
 				} else {
 					*(lineptr++) = c;
 				}
 			}
-			fclose(f);
+			fclose(io_file);
 			*(lineptr++) = '"';
 
 			/* stat */
 			n = sprintf(lineptr, ",\"stat\":");
 			lineptr += n;
-			sprintf(path, "/proc/%d/stat", pid);
-			f = fopen(path, "r");
 			*(lineptr++) = '"';
-			while ((c = fgetc(f)) != EOF) {
+			while ((c = fgetc(stat_file)) != EOF) {
 				if (c == '\n') {
 					*(lineptr++) = '\\'; *(lineptr++) = 'n';
 				} else {
 					*(lineptr++) = c;
 				}
 			}
-			fclose(f);
+			fclose(stat_file);
 			*(lineptr++) = '"';
 
 			*(lineptr++) = '}';
+
+			nr_live_procs++;
 		}
 		*(lineptr++) = '}';
 		*(lineptr++) = '}';
 		*(lineptr++) = '\0';
 
 		fprintf(out_file, "%s\n", linebuf);
+
+		if (nr_live_procs == 0)
+			break;
 
 		next += option.interval;
 		gettimeofday(&tv_now, NULL);
@@ -166,6 +196,11 @@ loop(void) {
 
 	if (option.output != NULL) {
 		fclose(out_file);
+	}
+
+	for (idx = 0; idx < option.nr_procs; idx++) {
+		free(io_path_list[idx]);
+		free(stat_path_list[idx]);
 	}
 }
 
@@ -198,6 +233,8 @@ main(int argc, char **argv) {
     }
 
 	loop();
+
+	free(linebuf);
 
 	return EXIT_SUCCESS;
 }
