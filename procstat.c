@@ -126,9 +126,6 @@ loop(void) {
 			FILE *io_file, *stat_file;
 			char c;
 
-			if (nr_live_procs > 0)
-				*(lineptr++) = ',';
-
 			/* pid_list[idx] is set to 0 when process termination is detected. */
 			if (pid == 0)
 				continue;
@@ -142,6 +139,9 @@ loop(void) {
 				option.pid_list[idx] = 0;
 				continue;
 			}
+
+			if (nr_live_procs > 0)
+				*(lineptr++) = ',';
 
 			n = sprintf(lineptr, "\"%d\":{", pid);
 			lineptr += n;
