@@ -68,7 +68,6 @@ parse_args(int argc, char **argv) {
 			option.interval = interval * 1000000L; /* in microseconds */
 			break;
 		case 'h':
-			option.nr_procs++;
 			print_help();
 			exit (1);
 		default:
