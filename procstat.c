@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <ctype.h>
+#include <err.h>
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
@@ -68,8 +69,12 @@ parse_args(int argc, char **argv) {
 			option.interval = interval * 1000000L; /* in microseconds */
 			break;
 		case 'h':
+			/* errx(1, "wrong usage"); */
 			print_help();
-			abort();
+      			/* errx(1, "failed"); */
+			return;
+			/* errx(1, "see */
+			/* abort(); */
 		default:
 			print_help();
 			abort ();
@@ -207,8 +212,7 @@ loop(void) {
 
 int
 main(int argc, char **argv) {
-    struct sigaction sigint_act;
-
+	struct sigaction sigint_act;
 	parse_args(argc, argv);
 
 	if (option.nr_procs == 0) {
@@ -221,17 +225,17 @@ main(int argc, char **argv) {
 
 	/* init signal handlers */
 	bzero(&sigint_act, sizeof(struct sigaction));
-    sigint_act.sa_sigaction = sigint_handler;
-    sigint_act.sa_flags = SA_SIGINFO | SA_RESTART;
-    if (sigaction(SIGINT, &sigint_act, NULL) != 0) {
-        perror("failed to set SIGINT handler");
-        exit(EXIT_FAILURE);
-    }
+	sigint_act.sa_sigaction = sigint_handler;
+	sigint_act.sa_flags = SA_SIGINFO | SA_RESTART;
+	if (sigaction(SIGINT, &sigint_act, NULL) != 0) {
+		perror("failed to set SIGINT handler");
+		exit(EXIT_FAILURE);
+	}
 
 	if (sigaction(SIGTERM, &sigint_act, NULL) != 0) {
-        perror("failed to set SIGTERM handler");
-        exit(EXIT_FAILURE);
-    }
+		perror("failed to set SIGTERM handler");
+		exit(EXIT_FAILURE);
+	}
 
 	loop();
 
