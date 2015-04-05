@@ -31,11 +31,10 @@ sigint_handler(int signum, siginfo_t *info, void *handler) {
 static void
 print_help(void)
 {
-	printf("Usage: procstat [options]\n");
-	printf("\nOptions:\n");
-	printf("  -p PID	Process ID of target.\n");
-	printf("  -o FILE	Output file path. (default: standard output)\n");
-	printf("  -i SEC	Recording interval. (default: 1.0)\n");
+	puts("Usage: procstat [ -h ] [ -p PID ] [ -o FILE ] [ -s SEC ]");
+	puts("  -p PID	Process ID of target.");
+	puts("  -o FILE	Output file path. (default: standard output)");
+	puts("  -i SEC	Recording interval. (default: 1.0)");
 }
 
 static void
@@ -69,17 +68,15 @@ parse_args(int argc, char **argv) {
 			option.interval = interval * 1000000L; /* in microseconds */
 			break;
 		case 'h':
-			/* errx(1, "wrong usage"); */
+			option.nr_procs++;
 			print_help();
-      			/* errx(1, "failed"); */
-			return;
-			/* errx(1, "see */
-			/* abort(); */
+			exit (1);
 		default:
 			print_help();
-			abort ();
+			errx(1, "Wrong usage: %s ", argv[1]);
 		}
 	}
+	return;
 }
 
 static char *linebuf = NULL;
