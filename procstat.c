@@ -194,9 +194,8 @@ loop(void) {
 			usleep(next - now);
 	}
 
-	if (option.output != NULL) {
+	if (option.output != NULL)
 		fclose(out_file);
-	}
 
 	for (idx = 0; idx < option.nr_procs; idx++) {
 		free(io_path_list[idx]);
