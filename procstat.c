@@ -29,8 +29,7 @@ sigint_handler(int signum, siginfo_t *info, void *handler) {
 }
 
 static void
-print_help(void)
-{
+print_help(void) {
 	puts("Usage: procstat [ -h ] [ -p PID ] [ -o FILE ] [ -s SEC ]");
 	puts("  -p PID	Process ID of target.");
 	puts("  -o FILE	Output file path. (default: standard output)");
@@ -75,7 +74,6 @@ parse_args(int argc, char **argv) {
 			errx(1, "Wrong usage: %s ", argv[1]);
 		}
 	}
-	return;
 }
 
 static char *linebuf = NULL;
