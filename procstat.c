@@ -1,12 +1,13 @@
+#include <sys/time.h>
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
 #include <stdbool.h>
+#include <ctype.h>
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
-#include <sys/time.h>
+
 
 static struct {
 	int nr_procs;
@@ -52,7 +53,7 @@ parse_args(int argc, char **argv) {
 		switch (c)
 		{
 		case 'p':
-			option.nr_procs ++;
+			option.nr_procs++;
 			option.pid_list = realloc(option.pid_list, sizeof(pid_t) * option.nr_procs);
 			pid = atoi(optarg);
 			option.pid_list[option.nr_procs - 1] = pid;
