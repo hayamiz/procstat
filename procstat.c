@@ -12,9 +12,7 @@
 static struct {
 	int nr_procs;
 	pid_t *pid_list;
-
 	useconds_t interval;
-
 	char *output;
 } option;
 
