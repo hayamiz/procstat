@@ -196,11 +196,7 @@ loop(void) {
 
 	if (option.output != NULL)
 		fclose(out_file);
-<<<<<<< HEAD
-	
-=======
 
->>>>>>> parent of a70169d... fix core dumps and parse arguments in main
 	for (idx = 0; idx < option.nr_procs; idx++) {
 		free(io_path_list[idx]);
 		free(stat_path_list[idx]);
