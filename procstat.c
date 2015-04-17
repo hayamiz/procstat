@@ -30,7 +30,7 @@ sigint_handler(int signum, siginfo_t *info, void *handler) {
 
 static void
 print_help(void) {
-	puts("Usage: procstat [ -h ] [ -p PID ] [ -o FILE ] [ -s SEC ]");
+	puts("Usage: procstat [ -h ] [ -p PID ] [ -o FILE ] [ -s SECONDS ]");
 	puts("  -p PID	Process ID of target.");
 	puts("  -o FILE	Output file path. (default: standard output)");
 	puts("  -i SEC	Recording interval. (default: 1.0)");
