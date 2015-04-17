@@ -41,7 +41,6 @@ parse_args(int argc, char **argv) {
 	pid_t pid;
 	double interval;
 	char c;
-	int pflag = 0;
 
 	option.nr_procs = 0;
 	option.pid_list = NULL;
@@ -53,10 +52,14 @@ parse_args(int argc, char **argv) {
 		switch (c)
 		{
 		case 'p':
-			pflag = 1;
+			option.nr_procs++;
+			option.pid_list = realloc(option.pid_list, sizeof(pid_t) * option.nr_procs);
 			pid = atoi(optarg);
+			option.pid_list[option.nr_procs - 1] = pid;
 			break;
 		case 'o':
+			if (option.output != NULL)
+				free(option.output);
 			option.output = strdup(optarg);
 			break;
 		case 'i':
@@ -70,12 +73,6 @@ parse_args(int argc, char **argv) {
 			print_help();
 			errx(1, "Wrong usage: %s ", argv[1]);
 		}
-	}
-
-	if (pflag) {
-		option.nr_procs++;
-		option.pid_list = realloc(option.pid_list, sizeof(pid_t) * option.nr_procs);
-		option.pid_list[option.nr_procs - 1] = pid;
 	}
 }
 
