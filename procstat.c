@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <signal.h>
 
+
 static struct {
 	int nr_procs;
 	pid_t *pid_list;
@@ -29,10 +30,53 @@ sigint_handler(int signum, siginfo_t *info, void *handler) {
 
 static void
 print_help(void) {
-	puts("Usage: procstat [ -h ] [ -p PID ] [ -o FILE ] [ -i SECONDS ]");
+	puts("Usage: procstat [ -h ] [ -p PID ] [ -o FILE ] [ -s SEC ]");
 	puts("  -p PID	Process ID of target.");
 	puts("  -o FILE	Output file path. (default: standard output)");
 	puts("  -i SEC	Recording interval. (default: 1.0)");
+}
+
+static void
+parse_args(int argc, char **argv) {
+	pid_t pid;
+	double interval;
+	char c;
+	int pflag = 0;
+
+	option.nr_procs = 0;
+	option.pid_list = NULL;
+	option.output = NULL;
+	option.interval = 1000000L;
+
+	opterr = 0;
+	while ((c = getopt(argc, argv, "p:o:i:h")) != -1) {
+		switch (c)
+		{
+		case 'p':
+			pflag = 1;
+			pid = atoi(optarg);
+			break;
+		case 'o':
+			option.output = strdup(optarg);
+			break;
+		case 'i':
+			interval = strtod(optarg, NULL);
+			option.interval = interval * 1000000L; /* in microseconds */
+			break;
+		case 'h':
+			print_help();
+			exit (1);
+		default:
+			print_help();
+			errx(1, "Wrong usage: %s ", argv[1]);
+		}
+	}
+
+	if (pflag) {
+		option.nr_procs++;
+		option.pid_list = realloc(option.pid_list, sizeof(pid_t) * option.nr_procs);
+		option.pid_list[option.nr_procs - 1] = pid;
+	}
 }
 
 static char *linebuf = NULL;
@@ -70,7 +114,6 @@ loop(void) {
 	gettimeofday(&tv_now, NULL);
 	now = tv_now.tv_sec * 1000000L + tv_now.tv_usec;
 	next = now;
-
 	while(is_running) {
 		char *lineptr = linebuf;
 		int n;
@@ -156,7 +199,11 @@ loop(void) {
 
 	if (option.output != NULL)
 		fclose(out_file);
+<<<<<<< HEAD
 	
+=======
+
+>>>>>>> parent of a70169d... fix core dumps and parse arguments in main
 	for (idx = 0; idx < option.nr_procs; idx++) {
 		free(io_path_list[idx]);
 		free(stat_path_list[idx]);
@@ -165,77 +212,15 @@ loop(void) {
 
 int
 main(int argc, char **argv) {
-
 	struct sigaction sigint_act;
-	pid_t pid;
-	double interval;
-	char c;
-	int pflag = 0, hflag = 0, iflag = 0;
+	parse_args(argc, argv);
 
-	option.nr_procs = 0;
-	option.pid_list = NULL;
-	option.output = NULL;
-	option.interval = 1000000L;
-	opterr = 0;
-
-	if (argc < 2 || argc >= 8) {
+	if (option.nr_procs == 0) {
+		fprintf(stderr, "ERROR: no pid given.\n");
 		print_help();
 		return EXIT_FAILURE;
 	}
-	
-	while ((c = getopt(argc, argv, "p:o:i:h")) != -1) {
-		switch (c)
-		{
-		case 'p':
-			pflag = 1;
-			pid = atoi(optarg);
-			option.nr_procs++;
-			break;
-		case 'o':
-			option.output = strdup(optarg);
-			break;
-		case 'i':
-			iflag = 1;
-			interval = strtod(optarg, NULL);
-			option.interval = interval * 1000000L; /* in microseconds */
-			break;
-		case 'h':
-			hflag = 1;
-			break;
-		default:
-			errx(1, "Wrong usage: see %s -h", argv[0]);
-		}
-	}
 
-
-	
-	if (hflag == 1 || argc < 2) {
-		print_help();
-		if (argc != 2 || pflag == 1) {
-			errx(1, "Wrong usage: see %s -h", argv[0]);
-			return EXIT_FAILURE;
-		}
-		return EXIT_SUCCESS;
-	}
-
-	if (pflag == 1) {
-		if (option.nr_procs == 0 || hflag == 1) {
-			print_help();
-			return EXIT_FAILURE;
-		}
-		option.nr_procs++;
-		option.pid_list = realloc(option.pid_list, sizeof(pid_t) * option.nr_procs);
-		option.pid_list[option.nr_procs - 1] = pid;
-	}
-
-	if (iflag) {
-		if(pflag == 0) {
-			print_help();
-			return EXIT_FAILURE;
-		}
-		option.interval = interval * 1000000L; /* in microseconds */
-	}
-	
 	linebuf = malloc(sizeof(char) * 1024L * 64L * option.nr_procs);
 
 	/* init signal handlers */
@@ -253,6 +238,7 @@ main(int argc, char **argv) {
 	}
 
 	loop();
+
 	free(linebuf);
 
 	return EXIT_SUCCESS;
