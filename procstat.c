@@ -1,12 +1,14 @@
+#include <sys/time.h>
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
 #include <stdbool.h>
+#include <ctype.h>
+#include <err.h>
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
-#include <sys/time.h>
+
 
 static struct {
 	int nr_procs;
@@ -27,13 +29,11 @@ sigint_handler(int signum, siginfo_t *info, void *handler) {
 }
 
 static void
-print_help(void)
-{
-	printf("Usage: procstat [options]\n");
-	printf("\nOptions:\n");
-	printf("  -p PID	Process ID of target.\n");
-	printf("  -o FILE	Output file path. (default: standard output)\n");
-	printf("  -i SEC	Recording interval. (default: 1.0)\n");
+print_help(void) {
+	puts("Usage: procstat [ -h ] [ -p PID ] [ -o FILE ] [ -i SECONDS ]");
+	puts("  -p PID	Process ID of target.");
+	puts("  -o FILE	Output file path. (default: standard output)");
+	puts("  -i SEC	Recording interval. (default: 1.0)");
 }
 
 static void
@@ -52,7 +52,7 @@ parse_args(int argc, char **argv) {
 		switch (c)
 		{
 		case 'p':
-			option.nr_procs ++;
+			option.nr_procs++;
 			option.pid_list = realloc(option.pid_list, sizeof(pid_t) * option.nr_procs);
 			pid = atoi(optarg);
 			option.pid_list[option.nr_procs - 1] = pid;
@@ -68,10 +68,10 @@ parse_args(int argc, char **argv) {
 			break;
 		case 'h':
 			print_help();
-			abort();
+			exit (1);
 		default:
 			print_help();
-			abort ();
+			errx(1, "Wrong usage: %s ", argv[1]);
 		}
 	}
 }
@@ -194,9 +194,8 @@ loop(void) {
 			usleep(next - now);
 	}
 
-	if (option.output != NULL) {
+	if (option.output != NULL)
 		fclose(out_file);
-	}
 
 	for (idx = 0; idx < option.nr_procs; idx++) {
 		free(io_path_list[idx]);
@@ -206,8 +205,7 @@ loop(void) {
 
 int
 main(int argc, char **argv) {
-    struct sigaction sigint_act;
-
+	struct sigaction sigint_act;
 	parse_args(argc, argv);
 
 	if (option.nr_procs == 0) {
@@ -220,17 +218,17 @@ main(int argc, char **argv) {
 
 	/* init signal handlers */
 	bzero(&sigint_act, sizeof(struct sigaction));
-    sigint_act.sa_sigaction = sigint_handler;
-    sigint_act.sa_flags = SA_SIGINFO | SA_RESTART;
-    if (sigaction(SIGINT, &sigint_act, NULL) != 0) {
-        perror("failed to set SIGINT handler");
-        exit(EXIT_FAILURE);
-    }
+	sigint_act.sa_sigaction = sigint_handler;
+	sigint_act.sa_flags = SA_SIGINFO | SA_RESTART;
+	if (sigaction(SIGINT, &sigint_act, NULL) != 0) {
+		perror("failed to set SIGINT handler");
+		exit(EXIT_FAILURE);
+	}
 
 	if (sigaction(SIGTERM, &sigint_act, NULL) != 0) {
-        perror("failed to set SIGTERM handler");
-        exit(EXIT_FAILURE);
-    }
+		perror("failed to set SIGTERM handler");
+		exit(EXIT_FAILURE);
+	}
 
 	loop();
 
